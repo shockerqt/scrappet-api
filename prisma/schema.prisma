@@ -1,0 +1,92 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Department {
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  slug       String     @unique
+  name       String
+  categories Category[]
+}
+
+model Category {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  slug         String     @unique
+  name         String
+  products     Product[]
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String     @db.ObjectId
+}
+
+model Product {
+  id                String             @id @default(auto()) @map("_id") @db.ObjectId
+  slug              String             @unique
+  category          Category           @relation(fields: [categoryId], references: [id])
+  categoryId        String             @db.ObjectId
+  description       String
+  productAttributes ProductAttribute[]
+  productVariants   ProductVariant[]
+}
+
+model ProductAttribute {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  product   Product   @relation(fields: [productId], references: [id])
+  productId String    @db.ObjectId
+  name      String
+  value     String?
+  quantity  Quantity?
+}
+
+model ProductVariant {
+  id                       String                    @id @default(auto()) @map("_id") @db.ObjectId
+  product                  Product                   @relation(fields: [productId], references: [id])
+  productId                String                    @db.ObjectId
+  images                   String[]
+  productVariantAttributes ProductVariantAttribute[]
+  ProductVariantOffer      ProductVariantOffer[]
+}
+
+model ProductVariantAttribute {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  productVariant   ProductVariant @relation(fields: [productVariantId], references: [id])
+  productVariantId String         @db.ObjectId
+  name             String
+  value            String?
+  quantity         Quantity?
+}
+
+model ProductVariantOffer {
+  id               String                          @id @default(auto()) @map("_id") @db.ObjectId
+  productVariant   ProductVariant                  @relation(fields: [productVariantId], references: [id])
+  shop             Shop                            @relation(fields: [shopId], references: [id])
+  haveStock        Boolean
+  price            Int
+  priceHistory     ProductVariantOfferPriceStamp[]
+  productVariantId String                          @db.ObjectId
+  shopId           String                          @db.ObjectId
+}
+
+model Shop {
+  id                  String                @id @default(auto()) @map("_id") @db.ObjectId
+  slug                String
+  name                String
+  ProductVariantOffer ProductVariantOffer[]
+}
+
+model ProductVariantOfferPriceStamp {
+  id                    String               @id @default(auto()) @map("_id") @db.ObjectId
+  date                  DateTime
+  price                 Int
+  productVariantOffer   ProductVariantOffer? @relation(fields: [productVariantOfferId], references: [id])
+  productVariantOfferId String?              @db.ObjectId
+}
+
+type Quantity {
+  quantity Float
+  unit     String
+}
